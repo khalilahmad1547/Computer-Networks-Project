@@ -13,7 +13,7 @@ class Server:
     # Groups = {GroupID:[Group Members List]}
     Admins = {}     # Each Group's Admin ID and Group's ID
     # Admins = {GroupID:Group_Admin_ID}
-    Clients = {}    # Each Clients ID and Socket(if available)
+    ClientsSockets = {}    # Each Clients ID and Socket(if available)
     # Clients = {Clients_ID:Client_Socket}
     CurrentClientStatus = {}    # Each Client's ID with its Sign In status
     # CurrentClientStatus = {ClientID:'True/False'}
@@ -31,6 +31,15 @@ class Server:
                 rep = 'True'
                 sock.sendall(rep.encode('UTF-8'))
                 print(self.ClientPass)
+                print("Adding Client's Socket to Available Clients Lists ...")
+                self.ClientsSockets[str(id)] = sock
+                print("added successfully ...")
+                print("available clients are ")
+                print(self.ClientsSockets)
+                print("updating Client's status ...")
+                self.CurrentClientStatus[str(id)] = 'True'
+                print("updated successfully ...")
+                print(self.CurrentClientStatus)
             else:
                 print("Password not matched ...")
                 rep = 'False'
@@ -53,6 +62,10 @@ class Server:
             print("Sending key to Client ...")
             sock.sendall(temp.encode('UTF-8'))
             print("Sended Successfully ...")
+            print("updating Client's status ...")
+            self.CurrentClientStatus[str(temp)] = 'False'
+            print("updated successfully ...")
+            print(self.CurrentClientStatus)
         else:
             print("Key is present already ...")
             self.SignUp(password)
@@ -86,6 +99,18 @@ class Server:
             msg = sock.recv(1024)
             msg = msg.decode('UTF-8')
             if not msg:
+                if sock in self.ClientsSockets.values():
+                    for id, s in self.ClientsSockets.items():
+                        if sock == s:
+                            print("deleting Socket from list ...")
+                            del self.ClientsSockets[id]
+                            print("deleted ...")
+                            print(self.ClientsSockets)
+                            print("updating client's status ...")
+                            self.CurrentClientStatus[id] = 'False'
+                            print("updated ...")
+                            print(self.CurrentClientStatus)
+                            break
                 break
             else:
                 self.Decoder(msg, sock)

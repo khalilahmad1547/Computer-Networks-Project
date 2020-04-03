@@ -8,7 +8,7 @@ class Client:
     MyName = None     # My user name
     MyId = None   # My unique Id stored in server
     MyGroups = {}   # Groups which I have joined
-    # MyGroups = {'Group Name':group_Id}
+    # MyGroups = {'Group Name':'group_Id'}
     MyContacts = {}     # List of contacts which i have saved
     # MyContacts = {Contact_Name:His_ID}
     MyStatus = False   # I am online or offline
@@ -17,21 +17,13 @@ class Client:
     OnlineClients = None      # other online clients
 
     def SendMessage(self,):
-        print(self.OnlineClients)
-        self.OtherClient = input("Enter user to connect :")
-        msg = input(">>> ")
-        msg = self.EncodeMessage(msg)
-        self.Socket.sendall(msg)
-        return msg.decode('UTF-8')
+        pass
 
     def RecvMessage(self):
-        msg = self.Socket.recv(1024)
-        print(msg.decode('UTF-8'))
+        pass
 
     def EncodeMessage(self, msg):
-        msg = self.OtherClient + "<" + msg
-        msg = msg.encode('UTF-8')
-        return msg
+        pass
 
     def SignUp(self):   # will do sign Up
         self.MyName = input("Enter your User Name :")
@@ -63,13 +55,26 @@ class Client:
         pass
 
     def GoOffline(self):    # will disconnect from server
-        pass
+        self.Socket.close()
+        self.Socket = None
+        self.MyStatus = False
 
     def AddContact(self):   # will add new contact
-        pass
+        if self.MyStatus is True:
+            tid = input("Enter ID :")
+            tname = input("Enter Name :")
+            if tid not in self.MyContacts.values():
+                self.MyContacts[tname] = tid
+                print("Added successfully")
+            else:
+                print("User Already Exist")
+        else:
+            print("Please Sign in")
 
     def MyProfile(self):    # will print My basics info
-        pass
+        if self.MyStatus is True:
+            print("User Name :", self.MyName)
+            print("User ID :", self.MyId)
 
     def Chat(self):
         pass
@@ -124,7 +129,9 @@ class Client:
                 print("1. Create New Group")
                 print("2. Chat")
                 print("3. Go Offline")
-                print("4. Exit")
+                print("4. My Profile")
+                print("5. Add New Contact")
+                print("6. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
@@ -133,6 +140,10 @@ class Client:
                 elif temp is '3':
                     self.GoOffline()
                 elif temp is '4':
+                    self.MyProfile()
+                elif temp is '5':
+                    self.AddContact()
+                elif temp is '6':
                     self.Socket.close()
                     break
                 else:
