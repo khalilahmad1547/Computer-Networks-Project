@@ -37,7 +37,7 @@ class Server:
                 print("available clients are ")
                 print(self.ClientsSockets)
                 print("updating Client's status ...")
-                self.CurrentClientStatus[str(id)] = 'True'
+                self.CurrentClientStatus[str(id)] = 'online'
                 print("updated successfully ...")
                 print(self.CurrentClientStatus)
             else:
@@ -63,12 +63,37 @@ class Server:
             sock.sendall(temp.encode('UTF-8'))
             print("Sended Successfully ...")
             print("updating Client's status ...")
-            self.CurrentClientStatus[str(temp)] = 'False'
+            self.CurrentClientStatus[str(temp)] = 'offline'
             print("updated successfully ...")
             print(self.CurrentClientStatus)
         else:
             print("Key is present already ...")
             self.SignUp(password)
+
+    def Info(self, msg, sock):
+        print(msg)
+        print("got an info request ...")
+        rep = ''
+        print("gathering info ...")
+        for EachId in msg:
+            print("for EachId in msg:",EachId)
+            if EachId in self.CurrentClientStatus.keys():
+                print("if EachId in self.CurrentClientStatus.keys():",EachId)
+                if self.CurrentClientStatus[EachId] == 'online':
+                    print("if self.CurrentClientStatus[EachId]:", EachId)
+                    rep = rep + str(EachId) + ":online<"
+                    print(rep)
+                else:
+                    print("else:")
+                    rep = rep + str(EachId) + ":offline<"
+                    print(rep)
+            else:
+                rep = rep + str(EachId) + ":Not found<"
+        print("gathered ...")
+        print(rep)
+        print("sending to client ...")
+        sock.sendall(str(rep).encode('UTF-8'))
+        print("sent ...")
 
     def CreateGroup(self):
         pass
@@ -92,6 +117,11 @@ class Server:
                     self.SignUp(msg[2], sock)
                 except IndexError as err:
                     print("ERROR in message ...")
+            if msg[1] == 'info':
+                try:
+                    self.Info(msg[2:], sock)
+                except IndexError as err:
+                    print("error in index ", err)
 
 
     def Handler(self, sock, adr):
@@ -107,7 +137,7 @@ class Server:
                             print("deleted ...")
                             print(self.ClientsSockets)
                             print("updating client's status ...")
-                            self.CurrentClientStatus[id] = 'False'
+                            self.CurrentClientStatus[id] = 'offline'
                             print("updated ...")
                             print(self.CurrentClientStatus)
                             break

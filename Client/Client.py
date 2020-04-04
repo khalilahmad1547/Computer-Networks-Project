@@ -10,11 +10,9 @@ class Client:
     MyGroups = {}   # Groups which I have joined
     # MyGroups = {'Group Name':'group_Id'}
     MyContacts = {}     # List of contacts which i have saved
-    # MyContacts = {Contact_Name:His_ID}
+    # MyContacts = {'ID':'Name'}
     MyStatus = False   # I am online or offline
     Socket = None     # socket
-    OtherClient = None        # to which client of group i am chatting
-    OnlineClients = None      # other online clients
 
     def SendMessage(self,):
         pass
@@ -24,6 +22,53 @@ class Client:
 
     def EncodeMessage(self, msg):
         pass
+
+    def SaveData(self):
+        if self.MyStatus is True:
+            with open("MyContacts.json", 'w') as File:
+                json.dump(self.MyContacts, File)
+            with open("MyGroups.json", 'w') as File:
+                json.dump(self.MyGroups, File)
+        else:
+            print("Please Sign in")
+
+    def LoadData(self):
+        if self.MyStatus is True:
+            try:
+                File = open("MyContacts.json")
+                self.MyContacts = json.load(File)
+            except FileNotFoundError as err:
+                print("No Saved Data found")
+            else:
+                print("Data Loaded successfully")
+            try:
+                File = open("MyGroups.json")
+                self.MyGroups = json.load(File)
+            except FileNotFoundError as err:
+                print("No Saved Data found")
+            else:
+                print("Data Loaded successfully")
+
+        else:
+            print("Please Sign in")
+
+    def Contacts(self):
+        if self.MyStatus is True:
+            msg = "r<info"
+            # "r<info<id<id" format
+            for id, name in self.MyContacts.items():
+                msg = msg+"<"+str(id)
+            self.Socket.sendall(msg.encode('UTF-8'))
+            info = self.Socket.recv(1024).decode('UTF-8')
+            info = info.split("<")
+            for EachInfo in info[:-1]:
+                EachInfo = EachInfo.split(":")
+                if EachInfo[0] in self.MyContacts.keys():
+                    print(f"Name :{self.MyContacts[EachInfo[0]]}",f"ID :{EachInfo[0]}",f"status :{EachInfo[1]}",sep='     ')
+                else:
+                    print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+        else:
+            print("Please Sign in")
 
     def SignUp(self):   # will do sign Up
         self.MyName = input("Enter your User Name :")
@@ -63,8 +108,8 @@ class Client:
         if self.MyStatus is True:
             tid = input("Enter ID :")
             tname = input("Enter Name :")
-            if tid not in self.MyContacts.values():
-                self.MyContacts[tname] = tid
+            if tid not in self.MyContacts.keys():
+                self.MyContacts[str(tid)] = tname
                 print("Added successfully")
             else:
                 print("User Already Exist")
@@ -125,13 +170,16 @@ class Client:
                     self.SignUp()
                 elif temp is '2':
                     self.SignIn()
+                    #print("loading data")
+                    #self.LoadData()
             else:
                 print("1. Create New Group")
                 print("2. Chat")
                 print("3. Go Offline")
                 print("4. My Profile")
                 print("5. Add New Contact")
-                print("6. Exit")
+                print("6. Contacts")
+                print("7. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
@@ -144,13 +192,21 @@ class Client:
                 elif temp is '5':
                     self.AddContact()
                 elif temp is '6':
+                    self.Contacts()
+                elif temp is '7':
+                    #self.SaveData()
                     self.Socket.close()
                     break
                 else:
                     print("Please Enter a Valid Option")
 
     def __init__(self):
-        self.Decoder()
+        try:
+            self.Decoder()
+        except KeyboardInterrupt:
+            print("saving data ")
+            #self.SaveData()
+            print("Saved data")
 
 
 if __name__ == '__main__':
