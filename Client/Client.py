@@ -8,7 +8,7 @@ class Client:
     MyName = None     # My user name
     MyId = None   # My unique Id stored in server
     MyGroups = {}   # Groups which I have joined
-    # MyGroups = {'Group Name':'group_Id'}
+    # MyGroups = {'Group Id':'Group Name'}
     MyContacts = {}     # List of contacts which i have saved
     # MyContacts = {'ID':'Name'}
     MyStatus = False   # I am online or offline
@@ -96,7 +96,36 @@ class Client:
             print("Try again")
             self.SignIn()
 
-    def CreateGroup(self):  # will create a New group
+    def CreateGroup(self):
+        tname = input("Enter Group Name :")
+        rep = "c<cg<"+tname + "<"
+        a = None
+        print("Enter 'end' to exit")
+        while a != 'end':
+            a = input("Enter User Id to Add in this Group:")
+            rep = rep + a + ":"
+        self.Socket.sendall(rep.encode('UTF-8'))
+        a = self.Socket.recv(1024)
+        a = a.decode('UTF-8')
+        self.MyGroups[str(a)] = tname
+        print(self.MyGroups)
+
+    def ChangeAdmin(self):
+        command = "c<ca<"
+        print("Your Groups :")
+        print(self.MyGroups)
+        gid = input("Enter group Id :")
+        self.Contacts()
+        id = input("Enter New Admins ID :")
+        command = command + str(id)+ "<" + str(gid)
+        self.Socket.sendall(command.encode('UTF-8'))
+        rep = self.Socket.recv(1024)
+        print(rep.decode('UTF-8'))
+
+    def RemoveFromGroup(self):
+        pass
+
+    def AddToGroup(self):
         pass
 
     def GoOffline(self):    # will disconnect from server
@@ -122,7 +151,39 @@ class Client:
             print("User ID :", self.MyId)
 
     def Chat(self):
-        pass
+        print("1. In group")
+        print("2. with client")
+        print("3. Exist")
+        t = input(">>>")
+        if t == '1':
+            print(self.MyGroups)
+            OtherClient = input("Enter Group ID :")
+            msg = input(">>>")
+            while msg!='\end':
+                if msg == '.':
+                    pass
+                else:
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                try:
+                    print(self.Socket.recv(1024).decode('UTF-8'))
+                    msg = input(">>>")
+                except KeyboardInterrupt:
+                    pass
+        if t == '2':
+            print(self.MyContacts)
+            OtherClient = input("Enter Client's ID :")
+            msg = input(">>>")
+            while msg != '\end':
+                if msg == '.':
+                    print(self.Socket.recv(1024).decode('UTF-8'))
+                    msg = input(">>>")
+                else:
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                    print(self.Socket.recv(1024).decode('UTF-8'))
+                    msg = input(">>>")
+
 
     def close(self):
         try:
@@ -174,26 +235,35 @@ class Client:
                     #self.LoadData()
             else:
                 print("1. Create New Group")
-                print("2. Chat")
-                print("3. Go Offline")
-                print("4. My Profile")
-                print("5. Add New Contact")
-                print("6. Contacts")
-                print("7. Exit")
+                print("2. Change Group Admin")
+                print("3. Add to Group")
+                print("4. Remove from Group")
+                print("5. Chat")
+                print("6. Go Offline")
+                print("7. My Profile")
+                print("8. Add New Contact")
+                print("9. Contacts")
+                print("10. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
                 elif temp is '2':
-                    self.Chat()
+                    self.ChangeAdmin()
                 elif temp is '3':
-                    self.GoOffline()
+                    self.AddToGroup()
                 elif temp is '4':
-                    self.MyProfile()
+                    self.RemoveFromGroup()
                 elif temp is '5':
-                    self.AddContact()
+                    self.Chat()
                 elif temp is '6':
-                    self.Contacts()
+                    self.GoOffline()
                 elif temp is '7':
+                    self.MyProfile()
+                elif temp is '8':
+                    self.AddContact()
+                elif temp is '9':
+                    self.Contacts()
+                elif temp is '10':
                     #self.SaveData()
                     self.Socket.close()
                     break
