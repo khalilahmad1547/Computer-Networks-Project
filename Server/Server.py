@@ -23,18 +23,37 @@ class Server:
     ClientPass = {}     # Each Client's ID with its Password
     # ClientPass = {Client_ID:Password}
     Buffer = {}     # to store un sended data with id
-    # Buffer = {ID:Message}
+    # Buffer = {ID:[Messages]}
 
     def GetID(self, sock):
+        #   What it will do?
+        #       it will return th id of the given socket
+        #   How it will do?
+        #       > itrate over the self.ClietsSockets
+        #       > mach socket if matched return ID
+        #       > if not matched continue
+        #   Other
+        #
         print("finding id ...")
         for id, s in self.ClientsSockets.items():
             if s == sock:
-                MyId = id
                 print("id found ...")
-        return id
+                return id
 
     def SignIn(self, id, password, sock):
-        print("Sign in request form ", sock)
+        #   What it will do?
+        #       it will do Sign in work
+        #   How it will do?
+        #       > Check id is regestered
+        #       > match ID and password
+        #       > send response = 'True' if success
+        #       > IF response == 'True'
+        #           change Client's status to online
+        #           Add Client's Socket to available Sockets
+        #       > send response = 'False' if not success
+        #   Other
+        #
+        print("Sign in request form ", id)
         if str(id) in str(self.ClientPass.keys()):
             print("ID found ...")
             if str(self.ClientPass[id]) == str(password):
@@ -61,6 +80,17 @@ class Server:
             sock.sendall(rep.encode('UTF-8'))
 
     def SignUp(self, password, sock):
+        #   What it will do?
+        #       it will do Sign Up Work
+        #   How it will do?
+        #       > genreate a random key
+        #       > IF key exist already
+        #               genreate an other key
+        #       > ELSE
+        #               Add key and password to self.ClientPass
+        #       > send key to Client
+        #   Other
+        #
         # print("New Sign Up request ...")
         print("Generating Random key ...")
         temp = random.randint(0, 10000)
@@ -82,6 +112,17 @@ class Server:
             self.SignUp(password)
 
     def CheckBuffer(self, stime):
+        #   What it will do?
+        #       it will send un sended messages
+        #   How it will do?
+        #       > IF Buffeer is not empty
+        #               if Client is Online
+        #                   Send messages to client
+        #               else
+        #                   Check for other client /do nothing
+        #       > sleep for some time and repeate again
+        #   Other
+        #
         while True:
             time.sleep(stime)
             print("checking bufffer ...")
@@ -89,6 +130,24 @@ class Server:
 
 
     def SendMessage(self, msg, id, sock):
+        #   What it will do?
+        #       it will send message to a client
+        #   How it will do?
+        #       > IF id is a group's ID
+        #            (send message to all group members)
+        #            > if Client is online
+        #                send message
+        #            else
+        #                add Cleint's ID and message to Buffer
+        #            (repeate above process for all group members)
+        #       > ELSE
+        #         (send message to Client)
+        #         > IF Client is online
+        #             send message
+        #         > ELSE
+        #             add Cleint's ID and message to Buffer
+        #   Other
+        #
         # first checking id
         print("message sending request ...")
         if id[0] == 'g':    # its a grou;s id
@@ -128,6 +187,15 @@ class Server:
                 print("added ...")
 
     def Info(self, msg, sock):
+        #   What it will do?
+        #       it will gather information of current status and send it to client
+        #   How it will do?
+        #       > IF a group_ID:
+        #            Send for Each Member's Status in required format
+        #       > else
+        #            decode the given ids and send there status
+        #   Other
+        #   response format : MemberID:statsus<MemberID:statsus ...
         print(msg)
         print("got an info request ...")
         rep = ''
@@ -145,11 +213,18 @@ class Server:
                     print("for EachId in msg:", EachId)
                     if EachId in self.CurrentClientStatus.keys():
                         if self.CurrentClientStatus[EachId] == 'online':
-                            rep = rep + str(EachId) + ":online<"
+                            if self.Admins[msg[0]] == EachId:
+                                rep = rep + str(EachId) + ":online (Admin)<"
+                            else:
+                                rep = rep + str(EachId) + ":online<"
+
                             print(rep)
                         else:
                             print("else:")
-                            rep = rep + str(EachId) + ":offline<"
+                            if self.Admins[msg[0]] == EachId:
+                                rep = rep + str(EachId) + ":offline (Admin)<"
+                            else:
+                                rep = rep + str(EachId) + ":offline<"
                             print(rep)
                     else:
                         rep = rep + str(EachId) + ":Not found<"
@@ -177,6 +252,20 @@ class Server:
         print("sent ...")
 
     def CreateGroup(self, msg, sock):
+        #   What it will do?
+        #       create a group
+        #   How it will do?
+        #       > get request from Client (c<cg<Group_Name<id<id ....)
+        #       > genrate a random key
+        #       > Add 'g' at start / key = g + str(key)
+        #       > IF key is not already present
+        #           Add Group_Name and Key to self.Groups
+        #       > genarte another key and repeate the process
+        #       > decode given ids and add them to group members
+        #       > add requester's ID to Group Members
+        #       > add requester's ID to Admin list with group ID
+        #   Other
+        #
         print("request for create a new group ...")
         print("Generating Random key ...")
         temp = random.randint(0, 10000)
@@ -193,16 +282,14 @@ class Server:
             for EachId in str(msg[1]).split(":")[:-2]:
                 print("adding members to groups ...")
                 self.Groups[temp].append(str(EachId))
-            for id, s in self.ClientsSockets.items():   # finding id of the requester
-                if s == sock:
-                    print("adding members to groups ...")
-                    self.Groups[temp].append(str(id))
+            id = self.GetID(sock)   # finding id of the requester
+            print("adding members to groups ...")
+            self.Groups[temp].append(str(id))
             print("Added Successfully ...")
             print(self.Groups)
             print("Adding Group Admin ...")
-            for id, s in self.ClientsSockets.items():
-                if s == sock:
-                    self.Admins[str(temp)] = str(id)
+            id = self.GetID(sock)
+            self.Admins[str(temp)] = str(id)
             print(self.Admins)
             print("updated ...")
             print("Sending key to Client ...")
@@ -213,6 +300,18 @@ class Server:
             self.CreateGroup(msg, sock)
 
     def ChangeAdmin(self, msg, sock):
+        #   What it will do?
+        #       change the admin of the group
+        #   How it will do?
+        #       > request from Client (c<cg<New_Admin_ID<Group_ID)
+        #       > get requester's id
+        #       > IF requester is Admin
+        #               change admin
+        #               send response 'Admin Changes'
+        #       > ELSE no change
+        #               send response "You are not admin of this group"
+        #   Other
+        #
         # formate
         # c<ca<Group_ID<New_Admin_ID
         # here msg = ['Group_ID','New_Admin_ID']
@@ -222,10 +321,10 @@ class Server:
             print("finding id of requester ...")
             MyId = self.GetID(sock)
             print("Conferming admin ...")
-            if self.Admins[msg[1]] == MyId:  # admin id matched
+            if self.Admins[msg[1]] == MyId:     # admin id matched
                 print("confermed admin ...")
                 print("changing admin ...")
-                self.Admins[msg[1]] = msg[0] # setting new Admin
+                self.Admins[msg[1]] = msg[0]    # setting new Admin
                 print("admin changed ...")
                 print(self.Admins)
                 rep = "Admin changed to " + msg[0]
@@ -239,12 +338,39 @@ class Server:
                 print("sent ...")
 
     def RemoveFromGroup(self,  msg, sock):
+        #   What it will do?
+        #       it will remove a member from group
+        #   How it will do?
+        #       > if requester is Admin
+        #           > if given_ID is in GroupMembers
+        #               remove from group
+        #               send response 'removed from group'
+        #           > else send response 'No member with this id found'
+        #       >else send "you are not admin of this group"
+        #   Other
+        #
         pass
 
     def AddToGroup(self,  msg, sock):
+        #   What it will do?
+        #       add a new member to an already created group
+        #   How it will do?
+        #       > if requester is Admin:
+        #           add given id to member list
+        #           send response 'added successfully'
+        #       > else send response 'you are not admin of this group'
+        #   Other
+        #
         pass
 
     def Decoder(self, msg, sock):
+        #   What it will do?
+        #       it decode the request and call a specific function to handel that request
+        #   How it will do?
+        #       > split by "<" (eg in sign in case ['r', 'in','id','password'])
+        #       > sepreat given info according to specified format and call the specific function
+        #   Other
+        #
         msg = msg.split("<")
         print(msg)
         if msg[0] == 'r':
@@ -282,6 +408,16 @@ class Server:
 
 
     def Handler(self, sock, adr):
+        #   What it will do?
+        #       it will handle incoming connection requets and update sockets of clients
+        #   How it will do?
+        #       > if connection is not required
+        #           > if socket was in self.CleintSockets
+        #                delete that socket
+        #                change status to offline
+        #           > close the connection
+        #   Other
+        #
         while True:
             msg = sock.recv(1024)
             msg = msg.decode('UTF-8')
@@ -305,6 +441,15 @@ class Server:
 
 
     def __init__(self):
+        #   What it will do?
+        #       inilize the server
+        #   How it will do?
+        #       > create a socket
+        #       > bind it to server address
+        #       > waite for new connections
+        #       > create a new thread when ever a connection request made
+        #   Other
+        #
         try:
             print("Creating Socket ...")
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
