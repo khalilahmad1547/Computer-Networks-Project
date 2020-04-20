@@ -93,9 +93,7 @@ class Server:
         print("message sending request ...")
         if id[0] == 'g':    # its a grou;s id
             print("a group id ...")
-            for i, s in self.ClientsSockets.items():
-                if s == sock:
-                    MyId = i
+            MyId = self.GetID(sock)
             for EachMember in self.Groups[id]:
                 print("sending message to client :", EachMember)
                 if EachMember in self.ClientsSockets.keys():
@@ -114,9 +112,7 @@ class Server:
                     print("added to buffer ...")
                     print(self.Buffer)
         else:
-            for i, s in self.ClientsSockets.items():
-                if s == sock:
-                    MyId = i
+            MyId = self.GetID(sock)
             print("a client's id ...")
             if id in self.ClientsSockets.keys():
                 print("client is online ...")
@@ -144,27 +140,27 @@ class Server:
         # msg[0][0] == 'g' mean a group ID
         # other wise it will be Clients ID
         if msg[0][0] == 'g': # group members request
-            for EachId in self.Groups[msg[0]]:  # getting info of group members
-                print("for EachId in msg:", EachId)
-                if EachId in self.CurrentClientStatus.keys():
-                    print("if EachId in self.CurrentClientStatus.keys():", EachId)
-                    if self.CurrentClientStatus[EachId] == 'online':
-                        print("if self.CurrentClientStatus[EachId]:", EachId)
-                        rep = rep + str(EachId) + ":online<"
-                        print(rep)
+            if self.GetID(sock) in self.Groups[msg[0]]:  # a memeber of that group
+                for EachId in self.Groups[msg[0]]:  # getting info of group members
+                    print("for EachId in msg:", EachId)
+                    if EachId in self.CurrentClientStatus.keys():
+                        if self.CurrentClientStatus[EachId] == 'online':
+                            rep = rep + str(EachId) + ":online<"
+                            print(rep)
+                        else:
+                            print("else:")
+                            rep = rep + str(EachId) + ":offline<"
+                            print(rep)
                     else:
-                        print("else:")
-                        rep = rep + str(EachId) + ":offline<"
-                        print(rep)
-                else:
-                    rep = rep + str(EachId) + ":Not found<"
+                        rep = rep + str(EachId) + ":Not found<"
+            else:
+                rep = "Sorry you are not a member of this gorup"
+
         else:
             for EachId in msg:
                 print("for EachId in msg:", EachId)
                 if EachId in self.CurrentClientStatus.keys():
-                    print("if EachId in self.CurrentClientStatus.keys():", EachId)
                     if self.CurrentClientStatus[EachId] == 'online':
-                        print("if self.CurrentClientStatus[EachId]:", EachId)
                         rep = rep + str(EachId) + ":online<"
                         print(rep)
                     else:

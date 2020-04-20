@@ -14,15 +14,6 @@ class Client:
     MyStatus = False   # I am online or offline
     Socket = None     # socket
 
-    def SendMessage(self,):
-        pass
-
-    def RecvMessage(self):
-        pass
-
-    def EncodeMessage(self, msg):
-        pass
-
     def SaveData(self):
         if self.MyStatus is True:
             with open("MyContacts.json", 'w') as File:
