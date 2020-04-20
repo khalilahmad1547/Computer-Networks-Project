@@ -56,15 +56,43 @@ class Client:
         if self.MyStatus is True:
             msg = "r<info"
             # "r<info<id<id" format
-            for id, name in self.MyContacts.items():
-                msg = msg+"<"+str(id)
+            if len(self.MyContacts) == 0:   # empty no saved contacts
+                print("NO Saved Contacts")
+            else:   # no empty conatacts are saved
+                for id, name in self.MyContacts.items():
+                    msg = msg + "<" + str(id)
+                self.Socket.sendall(msg.encode('UTF-8'))
+                info = self.Socket.recv(1024).decode('UTF-8')
+                info = info.split("<")
+                for EachInfo in info[:-1]:
+                    EachInfo = EachInfo.split(":")
+                    if EachInfo[0] in self.MyContacts.keys():
+                        print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}",
+                              sep='     ')
+                    else:
+                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+
+        else:
+            print("Please Sign in")
+
+    def GroupMembers(self):
+        if self.MyStatus is True:
+            msg = "r<info<"
+            # "r<info<'group ID'" format
+            # printing joined groups
+            for gID, Name in self.MyGroups.items():
+                print(f"Group ID :{gID} Group Name :{Name}")
+            gID = input("Enter Group ID :")
+            msg = msg + gID
             self.Socket.sendall(msg.encode('UTF-8'))
             info = self.Socket.recv(1024).decode('UTF-8')
             info = info.split("<")
             for EachInfo in info[:-1]:
                 EachInfo = EachInfo.split(":")
                 if EachInfo[0] in self.MyContacts.keys():
-                    print(f"Name :{self.MyContacts[EachInfo[0]]}",f"ID :{EachInfo[0]}",f"status :{EachInfo[1]}",sep='     ')
+                    print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+                elif EachInfo[0] == self.MyId:
+                    print(f"You ", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
                 else:
                     print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
         else:
@@ -111,6 +139,8 @@ class Client:
         print(self.MyGroups)
 
     def ChangeAdmin(self):
+        # formate
+        # c<ca<Group_ID<New_Admin_ID
         command = "c<ca<"
         print("Your Groups :")
         print(self.MyGroups)
@@ -243,7 +273,8 @@ class Client:
                 print("7. My Profile")
                 print("8. Add New Contact")
                 print("9. Contacts")
-                print("10. Exit")
+                print("a. View Group Members")
+                print("b. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
@@ -263,7 +294,9 @@ class Client:
                     self.AddContact()
                 elif temp is '9':
                     self.Contacts()
-                elif temp is '10':
+                elif temp is 'a':
+                    self.GroupMembers()
+                elif temp is 'b':
                     #self.SaveData()
                     self.Socket.close()
                     break

@@ -25,6 +25,14 @@ class Server:
     Buffer = {}     # to store un sended data with id
     # Buffer = {ID:Message}
 
+    def GetID(self, sock):
+        print("finding id ...")
+        for id, s in self.ClientsSockets.items():
+            if s == sock:
+                MyId = id
+                print("id found ...")
+        return id
+
     def SignIn(self, id, password, sock):
         print("Sign in request form ", sock)
         if str(id) in str(self.ClientPass.keys()):
@@ -128,20 +136,44 @@ class Server:
         print("got an info request ...")
         rep = ''
         print("gathering info ...")
-        for EachId in msg:
-            print("for EachId in msg:",EachId)
-            if EachId in self.CurrentClientStatus.keys():
-                print("if EachId in self.CurrentClientStatus.keys():",EachId)
-                if self.CurrentClientStatus[EachId] == 'online':
-                    print("if self.CurrentClientStatus[EachId]:", EachId)
-                    rep = rep + str(EachId) + ":online<"
-                    print(rep)
+        # if requests is for Group ID than
+        # r<info<gID
+        # len(msg) == 1 beacuse only one group ID will be passed
+        # and only one client ID can also be passed as well
+        # so checking weather a group ID of not will be like
+        # msg[0][0] == 'g' mean a group ID
+        # other wise it will be Clients ID
+        if msg[0][0] == 'g': # group members request
+            for EachId in self.Groups[msg[0]]:  # getting info of group members
+                print("for EachId in msg:", EachId)
+                if EachId in self.CurrentClientStatus.keys():
+                    print("if EachId in self.CurrentClientStatus.keys():", EachId)
+                    if self.CurrentClientStatus[EachId] == 'online':
+                        print("if self.CurrentClientStatus[EachId]:", EachId)
+                        rep = rep + str(EachId) + ":online<"
+                        print(rep)
+                    else:
+                        print("else:")
+                        rep = rep + str(EachId) + ":offline<"
+                        print(rep)
                 else:
-                    print("else:")
-                    rep = rep + str(EachId) + ":offline<"
-                    print(rep)
-            else:
-                rep = rep + str(EachId) + ":Not found<"
+                    rep = rep + str(EachId) + ":Not found<"
+        else:
+            for EachId in msg:
+                print("for EachId in msg:", EachId)
+                if EachId in self.CurrentClientStatus.keys():
+                    print("if EachId in self.CurrentClientStatus.keys():", EachId)
+                    if self.CurrentClientStatus[EachId] == 'online':
+                        print("if self.CurrentClientStatus[EachId]:", EachId)
+                        rep = rep + str(EachId) + ":online<"
+                        print(rep)
+                    else:
+                        print("else:")
+                        rep = rep + str(EachId) + ":offline<"
+                        print(rep)
+                else:
+                    rep = rep + str(EachId) + ":Not found<"
+
         print("gathered ...")
         print(rep)
         print("sending to client ...")
@@ -185,14 +217,14 @@ class Server:
             self.CreateGroup(msg, sock)
 
     def ChangeAdmin(self, msg, sock):
+        # formate
+        # c<ca<Group_ID<New_Admin_ID
+        # here msg = ['Group_ID','New_Admin_ID']
         print("request for changing admin ...")
         if sock in self.ClientsSockets.values():
             print("socket found ...")
             print("finding id of requester ...")
-            for id, s in self.ClientsSockets.items():
-                if s == sock:
-                    MyId = id
-                    print("id found ...")
+            MyId = self.GetID(sock)
             print("Conferming admin ...")
             if self.Admins[msg[1]] == MyId:  # admin id matched
                 print("confermed admin ...")
@@ -291,6 +323,7 @@ class Server:
             self.Socket.bind(ServerAdress)
         except socket.error as err:
             print("Socket Binding error :", err)
+            sys.exit(err)
         else:
             print("Server Running Successfully")
 
