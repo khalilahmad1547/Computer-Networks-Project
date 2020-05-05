@@ -7,6 +7,8 @@ Created on Fri Apr  3 10:42:02 2020
 
 from tkinter import *
 from functools import partial
+from tkinter import messagebox
+from PIL import Image, ImageTk
 
 
 def signin():
@@ -16,6 +18,8 @@ def signin():
     global password1
     global Squestion
     global Sanswer
+    global variable
+    global Name
     
     global Gui
     Gui = Tk()
@@ -74,6 +78,80 @@ def login():
    root2 = Tk()
    root2.geometry('500x400')  
    root2.title('Successfully login')
+   
+   TopFrame = Frame(root2).pack(side=TOP)
+     
+   LeftFrame = Frame(TopFrame)
+   
+   Label(LeftFrame, text = "Send Message",  height=1, width=15).pack(side=TOP)
+   
+   OptionList = ["Abdullah","Abdurrehman","Malik","Usama","Wajiha","Ahmad Tariq"] 
+   variable = StringVar(root2)
+   variable.set(OptionList[0])
+   opt = OptionMenu(LeftFrame, variable, *OptionList)
+   opt.config(width=13, font=('Helvetica', 9))
+   opt.pack(side="top")
+   
+   scrollBar = Scrollbar(LeftFrame)
+   scrollBar.pack(side=RIGHT, fill=Y)
+   Display = Text(LeftFrame, height=22, width=15)
+   Display.pack(side=TOP, fill=Y, padx=(5, 0))
+   scrollBar.config(command=Display.yview)
+   Display.config(yscrollcommand=scrollBar.set, background="#F4F6F7", highlightbackground="grey",state = 'disabled' )
+   def Namechange(*args):
+       Name.configure(state='normal')
+       Name.insert('end', variable.get())
+       Name.configure(state='disabled')
+       
+   def callback(*args):
+       Display.configure(state='normal')
+       Display.insert('end', '\n'+variable.get())
+       Display.configure(state='disabled')
+       Namechange()
+       
+   variable.trace("w", callback)
+   LeftFrame.pack(side=LEFT)
+    
+   
+   RightFrame = Frame(TopFrame).pack(side=RIGHT)
+      
+   displayFrame = Frame(RightFrame)
+   
+   UpperFrame = Frame(displayFrame,  height=2, width=15)
+   Name = Text(LeftFrame, height=2, width=10)
+   Name.pack(side=LEFT, fill=Y)
+   Name.config(state = 'disabled' )      
+   
+   #Label(UpperFrame, text = "Option", height=2, width=7).pack(side=RIGHT)
+   UpperFrame.pack(side=TOP)
+   
+   LowerFrame = Frame(displayFrame)
+   #lblLine = Label(displayFrame, text="*********************************************************************").pack()
+   scrollBar = Scrollbar(LowerFrame)
+   scrollBar.pack(side=RIGHT, fill=Y)
+   tkDisplay = Text(LowerFrame, height=18, width=55)
+   tkDisplay.pack(side=LEFT, fill=Y, padx=(5, 0))
+   tkDisplay.tag_config("tag_your_message", foreground="blue")
+   scrollBar.config(command=tkDisplay.yview)
+   tkDisplay.config(yscrollcommand=scrollBar.set, background="#F4F6F7", highlightbackground="grey", state="disabled")
+   LowerFrame.pack(side=TOP)
+   
+   displayFrame.pack(side=TOP)
+   
+   icon = PhotoImage(file='C:\\Users\Abdullah\Documents\Python\gh.png')
+   #icon = icon.subsample(2,2)
+   
+   BottomFrame = Frame(RightFrame)
+   tkMessage = Text(BottomFrame, height=2, width=35).pack(side=LEFT, padx=(5, 13), pady=(5, 10))
+   btnConnect = Button(BottomFrame, text = "Send", height=1, width=5).pack(side=RIGHT)
+   #btnConnect.config(image =icon)
+   BottomFrame.pack(side=TOP)
+   
+   root2.mainloop()
+    
+
+   #############################################################################
+   
    
 def savesignup():
     root1.destroy()
