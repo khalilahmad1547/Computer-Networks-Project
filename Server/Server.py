@@ -150,7 +150,7 @@ class Server:
         #
         # first checking id
         print("message sending request ...")
-        if id[0] == 'g':    # its a grou;s id
+        if id[0] == 'g':    # its a group id
             print("a group id ...")
             MyId = self.GetID(sock)
             for EachMember in self.Groups[id]:
@@ -164,10 +164,15 @@ class Server:
                     print("message sent ...")
 
                 else:
+                    temp = "In Group:" + self.GroupNames[id] + " By"
+                    temp = temp + "<" + str(MyId) + "<" + msg
                     print("client is not online ...")
                     print("adding message to buffer for sending latter ...")
-                    self.Buffer[str(EachMember)] = []
-                    self.Buffer[str(EachMember)].append(msg)
+                    if EachMember in self.Buffer.keys():
+                        self.Buffer[str(EachMember)].append(temp)
+                    else:
+                        self.Buffer[str(EachMember)] = []
+                        self.Buffer[str(EachMember)].append(temp)
                     print("added to buffer ...")
                     print(self.Buffer)
         else:
@@ -180,11 +185,16 @@ class Server:
                 self.ClientsSockets[id].sendall(temp.encode('UTF-8'))
                 print("sent ...")
             else:
+                temp = MyId + "<" + msg
                 print("client is not online ...")
                 print("adding to buffer ...")
-                self.Buffer[str(id)] = []
-                self.Buffer[id].append(msg)
+                if id in self.Buffer.keys():
+                    self.Buffer[str(id)].append(temp)
+                else:
+                    self.Buffer[str(id)] = []
+                    self.Buffer[str(id)].append(temp)
                 print("added ...")
+                print(self.Buffer)
 
     def Info(self, msg, sock):
         #   What it will do?
@@ -261,7 +271,7 @@ class Server:
         #       > IF key is not already present
         #           Add Group_Name and Key to self.Groups
         #       > genarte another key and repeate the process
-        #       > decode given ids and add them to group members
+        #       > decode given ids and Send them Group Joining Request
         #       > add requester's ID to Group Members
         #       > add requester's ID to Admin list with group ID
         #   Other
@@ -363,6 +373,26 @@ class Server:
         #
         pass
 
+    def CheckNotifications(self, sock):
+        print("got a request for Check Notifications ...")
+        MyId = self.GetID(sock)
+        if MyId in self.Buffer.keys():
+            print("got messages ...")
+            print("building response ...")
+            temp = "m<"
+            for EachNotification in self.Buffer[MyId]:
+                temp = temp + EachNotification + ":m<"
+            print("built ...")
+            print(temp)
+            sock.sendall(temp.encode('UTF-8'))
+            print("deleting from buffer ...")
+            del self.Buffer[MyId]
+            print("deleted ...")
+            print(self.Buffer)
+        else:
+            temp = "."
+            sock.sendall(temp.encode('UTf-8'))
+
     def Decoder(self, msg, sock):
         #   What it will do?
         #       it decode the request and call a specific function to handel that request
@@ -392,6 +422,11 @@ class Server:
             if msg[1] == 'info':
                 try:
                     self.Info(msg[2:], sock)
+                except IndexError as err:
+                    print("error in index ", err)
+            if msg[1] == 'nfc':
+                try:
+                    self.CheckNotifications(sock)
                 except IndexError as err:
                     print("error in index ", err)
         if msg[0] == 'c':

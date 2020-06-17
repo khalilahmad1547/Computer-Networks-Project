@@ -31,9 +31,14 @@ class Client:
     #       Information Request (for current statuse online/offline)
     #           request format: r<info<ClientID<ClientID ... or r<info<GroupID
     #           response format: ID:Status<ID:Status ...
+    #       For panding Notifications
+    #           request format: r<nfc
+    #           response format: m<Client's_ID<message:m<Client's_ID<message
+    #           or it could be Group Joining Request, which would be like
+    #           r<gj<Group_Name<Group_ID<Group_Admin<response
     # In Command Type
     #       Create Group
-    #           request format:c<cg<GroupName
+    #           request format:c<cg<GroupName<ID<ID<ID
     #           response format:unique Group ID (g+ID mean starts with g always)
     #       Remove from Group
     #           request format:c<rfg<Member's_ID<Group_ID
@@ -53,6 +58,36 @@ class Client:
     #           response format: no response from server
     ###############################################################################
     ###############################################################################
+
+    def CheckNotifications(self):
+        if self.MyStatus:
+            temp = "r<nfc"
+            self.Socket.send(temp.encode("UTF-8"))
+            temp = self.Socket.recv(1024).decode("UTF-8")
+            if temp[0] != '.':
+                temp = temp.split(":")[:-1]
+                total_Notifications = len(temp)
+                print(f"Notifications ({total_Notifications})")
+                self.MyNotifications = temp
+            else:
+                print("No Notification")
+        else:
+            print("Please Sign In in to your account")
+
+    def ViewNotifications(self):
+        if self.MyStatus:
+            if len(self.MyNotifications) != 0:
+                for EachNotiFication in self.MyNotifications:
+                    EachNotiFication = EachNotiFication.split("<")
+                    if EachNotiFication[0] == 'm':
+                        msg = EachNotiFication[1:]
+                        if msg[0] in self.MyContacts.keys():
+                            print(f"{self.MyContacts[msg[0]]} : ", f"{msg[1]}")
+                        else:
+                            print(f"{msg[0]} : ", f"{msg[1]}")
+
+        else:
+            print("Please Sign In")
 
     def SaveData(self):
         #       What it will do?
@@ -203,6 +238,7 @@ class Client:
         if temp.decode('UTF-8') == 'True':
             print("Sign in successful")
             self.MyStatus = True
+            self.CheckNotifications()
         else:
             print("Try again")
             self.SignIn()
@@ -447,7 +483,8 @@ class Client:
                 print("8. Add New Contact")
                 print("9. Contacts")
                 print("a. View Group Members")
-                print("b. Exit")
+                print("b. View Notifications")
+                print("c. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
@@ -470,6 +507,8 @@ class Client:
                 elif temp is 'a':
                     self.GroupMembers()
                 elif temp is 'b':
+                    self.ViewNotifications()
+                elif temp is 'c':
                     #self.SaveData()
                     self.Socket.close()
                     break
